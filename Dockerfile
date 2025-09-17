@@ -1,9 +1,13 @@
-FROM gradle:7.6-jdk17 AS build
+Docker :_ # -------- Stage 1: Build --------
+FROM gradle:8.7.0-jdk21 AS builder
 WORKDIR /app
 COPY . .
-RUN gradle build --no-daemon
+RUN chmod +x ./gradlew
+RUN ./gradlew clean build -x test --no-daemon
 
-FROM openjdk:17-slim
+# -------- Stage 2: Run --------
+FROM openjdk:21-jdk-slim
 WORKDIR /app
-COPY --from=build /app/build/libs/iplacex-discografica-api-1.0.jar ./app.jar
-CMD ["java", "-jar", "app.jar"]
+COPY --from=builder /app/build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
